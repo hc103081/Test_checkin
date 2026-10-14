@@ -5,7 +5,10 @@ export interface Resident {
   name: string; // 姓名
   studentId: string; // 學號
   dormitory: string; // 宿舍
-  bed: string; // 床位
+  bed: string; // 床位 / 原始房床字串 (如 J0514-4, #REF!)
+  roomNumber: string; // 房號 (如 J0514, 未分配)
+  bedNumber: string; // 床號 (如 4, 待編排)
+  roomAndBedDisplay: string; // 友善房號床位顯示 (如 J0514 房 4號床)
   flightArrival: string; // 航班入境時間
   vehicle: string; // 車輛
   bedding: number; // 訂購寢具
@@ -384,6 +387,27 @@ export function parseCSV(csvText: string): Resident[] {
       dateCategory = '簽證辦理';
     }
 
+    // Parse Room and Bed
+    let roomNumber = '';
+    let bedNumber = '';
+    let roomAndBedDisplay = '';
+
+    const cleanBed = bed.trim();
+    if (!cleanBed || cleanBed.includes('#REF!')) {
+      roomNumber = '未分配';
+      bedNumber = '待編排';
+      roomAndBedDisplay = '待編排房號 (#REF!)';
+    } else if (cleanBed.includes('-')) {
+      const parts = cleanBed.split('-');
+      roomNumber = parts[0].trim();
+      bedNumber = parts[1].trim();
+      roomAndBedDisplay = `${roomNumber} 房 (${bedNumber}號床)`;
+    } else {
+      roomNumber = cleanBed;
+      bedNumber = '1';
+      roomAndBedDisplay = `${roomNumber} 房`;
+    }
+
     return {
       id: `${index + 1}-${studentId || name}`,
       seq,
@@ -391,7 +415,10 @@ export function parseCSV(csvText: string): Resident[] {
       name,
       studentId,
       dormitory,
-      bed,
+      bed: cleanBed,
+      roomNumber,
+      bedNumber,
+      roomAndBedDisplay,
       flightArrival,
       vehicle,
       bedding,

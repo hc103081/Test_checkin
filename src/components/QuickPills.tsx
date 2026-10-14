@@ -21,6 +21,12 @@ export const QuickPills: React.FC<QuickPillsProps> = ({
     { label: '全部人員', preset: 'all', value: '', badge: '' },
     { label: '⏳ 待報到', preset: 'checkIn', value: 'no', badge: '' },
     { label: '✅ 已報到', preset: 'checkIn', value: 'yes', badge: '' },
+    { label: '🚪 已編配房號', preset: 'bedStatus', value: 'assigned', badge: '12' },
+    { label: '⚠️ 待編配房號', preset: 'bedStatus', value: 'ref', badge: '142' },
+    { label: '🚪 J0514 房', preset: 'room', value: 'J0514', badge: '' },
+    { label: '🚪 J0515 房', preset: 'room', value: 'J0515', badge: '' },
+    { label: '🚪 J0516 房', preset: 'room', value: 'J0516', badge: '' },
+    { label: '🚪 J0517 房', preset: 'room', value: 'J0517', badge: '' },
     { label: '🏢 第一宿舍', preset: 'dormitory', value: '第一宿舍', badge: '74' },
     { label: '🏫 修平科大', preset: 'dormitory', value: '修平科大學生宿舍', badge: '80' },
     { label: '🎓 外籍專班', preset: 'identity', value: '外籍生產專班', badge: '63' },
@@ -34,7 +40,6 @@ export const QuickPills: React.FC<QuickPillsProps> = ({
     { label: '🚫 寢具自備 ($0)', preset: 'bedding', value: '0', badge: '' },
     { label: '🚌 已排車輛', preset: 'hasVehicle', value: 'yes', badge: '' },
     { label: '❓ 未排車輛', preset: 'hasVehicle', value: 'no', badge: '' },
-    { label: '⚠️ 床位待排 (#REF!)', preset: 'bedStatus', value: 'ref', badge: '' },
   ];
 
   return (

@@ -83,9 +83,13 @@ export const MobileFilterDrawer: React.FC<MobileFilterDrawerProps> = ({
   ];
 
   const bedStatuses = [
-    { label: '全部床位', value: '' },
-    { label: '已具體編號 (J0514~)', value: 'assigned' },
-    { label: '待排定 (#REF!)', value: 'ref' },
+    { label: '全部房號狀態', value: '' },
+    { label: '已編配房號', value: 'assigned' },
+    { label: '待編配 (#REF!)', value: 'ref' },
+    { label: 'J0514 房', value: 'J0514' },
+    { label: 'J0515 房', value: 'J0515' },
+    { label: 'J0516 房', value: 'J0516' },
+    { label: 'J0517 房', value: 'J0517' },
   ];
 
   const renderChipGroup = (

@@ -7,8 +7,9 @@ import {
   Download,
   Building2,
   CheckCircle2,
-  FileSpreadsheet,
-  HelpCircle,
+  DoorOpen,
+  Info,
+  X,
 } from 'lucide-react';
 import { INITIAL_RESIDENTS, Resident } from './data/residentData';
 import { FlightBatch } from './data/flightBatches';
@@ -22,9 +23,11 @@ import { FlightScheduleDrawer } from './components/FlightScheduleDrawer';
 import { CsvImportModal } from './components/CsvImportModal';
 import { MobileFilterDrawer } from './components/MobileFilterDrawer';
 import { MobileBottomNav } from './components/MobileBottomNav';
+import { EditRoomModal } from './components/EditRoomModal';
 
 const STORAGE_KEY_CHECKIN = 'dorm_checkin_status_v1';
 const STORAGE_KEY_CUSTOM_DATA = 'dorm_residents_custom_v1';
+const STORAGE_KEY_BANNER_DISMISSED = 'dorm_room_banner_dismissed_v1';
 
 export default function App() {
   // Load residents
@@ -52,6 +55,15 @@ export default function App() {
       console.error(e);
     }
     return new Set<string>();
+  });
+
+  // Room Banner dismiss state
+  const [isBannerDismissed, setIsBannerDismissed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(STORAGE_KEY_BANNER_DISMISSED) === 'true';
+    } catch {
+      return false;
+    }
   });
 
   // Save check-ins to local storage
@@ -96,6 +108,7 @@ export default function App() {
 
   // Modals & Mobile Drawers
   const [selectedResident, setSelectedResident] = useState<Resident | null>(null);
+  const [editingRoomResident, setEditingRoomResident] = useState<Resident | null>(null);
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -110,6 +123,85 @@ export default function App() {
         next.add(studentId);
       }
       return next;
+    });
+  }, []);
+
+  // Save edited room number
+  const handleSaveRoom = useCallback((studentId: string, newBedString: string) => {
+    setResidents((prev) => {
+      const updated = prev.map((r) => {
+        if (r.studentId === studentId) {
+          const cleanBed = newBedString.trim();
+          let roomNumber = '';
+          let bedNumber = '';
+          let roomAndBedDisplay = '';
+
+          if (!cleanBed || cleanBed.includes('#REF!')) {
+            roomNumber = '未分配';
+            bedNumber = '待編排';
+            roomAndBedDisplay = '待編排房號 (#REF!)';
+          } else if (cleanBed.includes('-')) {
+            const parts = cleanBed.split('-');
+            roomNumber = parts[0].trim();
+            bedNumber = parts[1].trim();
+            roomAndBedDisplay = `${roomNumber} 房 (${bedNumber}號床)`;
+          } else {
+            roomNumber = cleanBed;
+            bedNumber = '1';
+            roomAndBedDisplay = `${roomNumber} 房`;
+          }
+
+          return {
+            ...r,
+            bed: cleanBed,
+            roomNumber,
+            bedNumber,
+            roomAndBedDisplay,
+          };
+        }
+        return r;
+      });
+
+      try {
+        localStorage.setItem(STORAGE_KEY_CUSTOM_DATA, JSON.stringify(updated));
+      } catch (e) {
+        console.error(e);
+      }
+      return updated;
+    });
+
+    // Also update selectedResident if open
+    setSelectedResident((prev) => {
+      if (prev && prev.studentId === studentId) {
+        const cleanBed = newBedString.trim();
+        let roomNumber = '';
+        let bedNumber = '';
+        let roomAndBedDisplay = '';
+
+        if (!cleanBed || cleanBed.includes('#REF!')) {
+          roomNumber = '未分配';
+          bedNumber = '待編排';
+          roomAndBedDisplay = '待編排房號 (#REF!)';
+        } else if (cleanBed.includes('-')) {
+          const parts = cleanBed.split('-');
+          roomNumber = parts[0].trim();
+          bedNumber = parts[1].trim();
+          roomAndBedDisplay = `${roomNumber} 房 (${bedNumber}號床)`;
+        } else {
+          roomNumber = cleanBed;
+          bedNumber = '1';
+          roomAndBedDisplay = `${roomNumber} 房`;
+        }
+
+        return {
+          ...prev,
+          bed: cleanBed,
+          roomNumber,
+          bedNumber,
+          roomAndBedDisplay,
+        };
+      }
+      return prev;
     });
   }, []);
 
@@ -140,6 +232,7 @@ export default function App() {
       if (preset === 'checkIn') next.checkInStatus = value;
       if (preset === 'hasVehicle') next.vehicle = value === 'yes' ? 'hasVehicle' : 'none';
       if (preset === 'bedStatus') next.bedStatus = value;
+      if (preset === 'room') next.bedStatus = value;
       return next;
     });
   }, []);
@@ -184,12 +277,15 @@ export default function App() {
     const checkInStatusFilter = filters.checkInStatus;
 
     return residents.filter((r) => {
-      // Global search
+      // Global search (includes Room Number)
       if (q) {
         const matchName = r.name.toLowerCase().includes(q);
         const matchId = r.studentId.toLowerCase().includes(q);
         const matchDorm = r.dormitory.toLowerCase().includes(q);
-        const matchBed = r.bed.toLowerCase().includes(q);
+        const matchBed =
+          r.bed.toLowerCase().includes(q) ||
+          (r.roomNumber && r.roomNumber.toLowerCase().includes(q)) ||
+          r.roomAndBedDisplay.toLowerCase().includes(q);
         const matchFlight = r.flightArrival.toLowerCase().includes(q);
         const matchVehicle = r.vehicle.toLowerCase().includes(q) || r.vehicleNormalized.toLowerCase().includes(q);
         const matchIdentity = r.identity.toLowerCase().includes(q);
@@ -233,11 +329,14 @@ export default function App() {
         }
       }
 
-      // Column: Bed status
+      // Column: Room / Bed status
       if (bedStatusFilter) {
         const isRef = r.bed.includes('#REF!') || !r.bed.trim();
         if (bedStatusFilter === 'assigned' && isRef) return false;
         if (bedStatusFilter === 'ref' && !isRef) return false;
+        if (['J0514', 'J0515', 'J0516', 'J0517'].includes(bedStatusFilter)) {
+          if (!r.bed.includes(bedStatusFilter) && !r.roomNumber.includes(bedStatusFilter)) return false;
+        }
       }
 
       // Column: Check-in status
@@ -306,7 +405,7 @@ export default function App() {
 
   // Export CSV with UTF-8 BOM
   const handleExportCsv = () => {
-    const headers = ['序號', '身分別', '姓名', '學號', '宿舍', '床位', '航班入境時間', '車輛', '訂購寢具', '報到狀態'];
+    const headers = ['序號', '身分別', '姓名', '學號', '宿舍', '房號床位', '航班入境時間', '車輛', '訂購寢具', '報到狀態'];
     const rows = sortedResidents.map((r) => [
       `"${r.seq}"`,
       `"${r.identity}"`,
@@ -325,7 +424,7 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `進住人員名冊_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `進住人員名冊_含房號_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -346,6 +445,15 @@ export default function App() {
     setResidents(INITIAL_RESIDENTS);
     try {
       localStorage.removeItem(STORAGE_KEY_CUSTOM_DATA);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleDismissBanner = () => {
+    setIsBannerDismissed(true);
+    try {
+      localStorage.setItem(STORAGE_KEY_BANNER_DISMISSED, 'true');
     } catch (e) {
       console.error(e);
     }
@@ -405,6 +513,10 @@ export default function App() {
     searchInput?.focus();
   };
 
+  // Count assigned rooms
+  const assignedRoomCount = residents.filter((r) => r.bed && !r.bed.includes('#REF!')).length;
+  const unassignedRoomCount = residents.length - assignedRoomCount;
+
   return (
     <div className="min-h-screen bg-slate-100/70 text-slate-800 antialiased font-sans pb-16 md:pb-6">
       {/* Top Navbar */}
@@ -425,7 +537,7 @@ export default function App() {
                 </span>
               </div>
               <p className="text-[10px] sm:text-[11px] text-slate-400 truncate max-w-[200px] sm:max-w-none">
-                外籍專班 &amp; 國際專修部 迎新名單
+                支援姓名、學號、宿舍與房號即時查詢
               </p>
             </div>
           </div>
@@ -453,7 +565,32 @@ export default function App() {
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-2.5 sm:px-6 py-3 sm:py-4">
-        {/* KPI Stats Overview (Ultra compact on mobile) */}
+        {/* Room Explanation Banner answering "房號呢" */}
+        {!isBannerDismissed && (
+          <div className="mb-3 p-3 bg-amber-50/90 border border-amber-200 rounded-2xl flex items-start justify-between gap-2.5 text-xs text-amber-900 shadow-2xs">
+            <div className="flex items-start gap-2">
+              <DoorOpen className="w-4 h-4 text-amber-700 mt-0.5 shrink-0" />
+              <div>
+                <span className="font-extrabold">💡 關於房號與床位說明：</span>
+                <span className="text-amber-800">
+                  原始 CSV 檔案中大部分資料為 <code className="font-mono bg-amber-100/80 px-1 py-0.2 rounded font-bold">#REF!</code>（原 Excel 跨表公式參照遺失/尚未排定）。
+                  目前原檔已具體編配 <strong>J0514、J0515、J0516、J0517</strong> 房號共 <strong>{assignedRoomCount} 人</strong>，其餘 <strong>{unassignedRoomCount} 人</strong> 待排。
+                  您可點擊每筆資料的「<strong className="text-emerald-700">✏️ 編輯房號</strong>」即時指派現場房號，資料將自動儲存並能一鍵匯出！
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={handleDismissBanner}
+              className="text-amber-500 hover:text-amber-700 p-1 rounded-lg hover:bg-amber-100/60 transition-colors shrink-0"
+              title="關閉說明"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {/* KPI Stats Overview */}
         <StatsCards
           allResidents={residents}
           filteredCount={sortedResidents.length}
@@ -497,6 +634,7 @@ export default function App() {
             checkedInIds={checkedInIds}
             onToggleCheckIn={handleToggleCheckIn}
             onSelectResident={setSelectedResident}
+            onEditRoom={setEditingRoomResident}
             sortField={sortField}
             sortOrder={sortOrder}
             onSort={handleSort}
@@ -508,6 +646,7 @@ export default function App() {
             checkedInIds={checkedInIds}
             onToggleCheckIn={handleToggleCheckIn}
             onSelectResident={setSelectedResident}
+            onEditRoom={setEditingRoomResident}
             searchHighlight={filters.globalSearch}
           />
         )}
@@ -521,10 +660,19 @@ export default function App() {
         onToggleCheckIn={handleToggleCheckIn}
         onPrev={handlePrevResident}
         onNext={handleNextResident}
+        onEditRoom={setEditingRoomResident}
         hasPrev={hasPrev}
         hasNext={hasNext}
         currentIndex={currentModalIndex}
         totalFiltered={sortedResidents.length}
+      />
+
+      {/* Edit Room & Bed Modal */}
+      <EditRoomModal
+        resident={editingRoomResident}
+        isOpen={Boolean(editingRoomResident)}
+        onClose={() => setEditingRoomResident(null)}
+        onSaveRoom={handleSaveRoom}
       />
 
       {/* Flight Schedule & Cadre Drawer */}

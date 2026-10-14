@@ -13,6 +13,8 @@ import {
   Plane,
   Clock,
   Sparkles,
+  DoorOpen,
+  Edit3,
 } from 'lucide-react';
 import { Resident } from '../data/residentData';
 
@@ -23,6 +25,7 @@ interface ResidentDetailModalProps {
   onToggleCheckIn: (studentId: string) => void;
   onPrev: () => void;
   onNext: () => void;
+  onEditRoom?: (resident: Resident) => void;
   hasPrev: boolean;
   hasNext: boolean;
   currentIndex: number;
@@ -36,6 +39,7 @@ export const ResidentDetailModal: React.FC<ResidentDetailModalProps> = ({
   onToggleCheckIn,
   onPrev,
   onNext,
+  onEditRoom,
   hasPrev,
   hasNext,
   currentIndex,
@@ -183,21 +187,39 @@ export const ResidentDetailModal: React.FC<ResidentDetailModalProps> = ({
               <div className="font-bold text-slate-800 text-xs sm:text-sm">{resident.dormitory}</div>
             </div>
 
-            {/* 床位 */}
+            {/* 房號與床位 */}
             <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-              <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-0.5">
-                <BedDouble className="w-3.5 h-3.5 text-emerald-500" />
-                <span>分配床位</span>
+              <div className="flex items-center justify-between text-xs text-slate-400 mb-0.5">
+                <span className="flex items-center gap-1">
+                  <DoorOpen className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>分配房號 / 床位</span>
+                </span>
+                {onEditRoom && (
+                  <button
+                    onClick={() => onEditRoom(resident)}
+                    className="text-[11px] font-bold text-emerald-600 hover:text-emerald-800 flex items-center gap-0.5"
+                  >
+                    <Edit3 className="w-3 h-3" />
+                    <span>編輯房號</span>
+                  </button>
+                )}
               </div>
               <div className="font-bold font-mono text-slate-800 text-xs sm:text-sm">
                 {resident.bed.includes('#REF!') || !resident.bed.trim() ? (
                   <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded text-xs">
-                    待現場排定
+                    尚未編配房號 (#REF!)
                   </span>
                 ) : (
-                  <span className="text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">
-                    {resident.bed}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded font-extrabold text-sm">
+                      {resident.roomNumber !== '未分配' ? `房號 ${resident.roomNumber}` : resident.bed}
+                    </span>
+                    {resident.bedNumber !== '待編排' && resident.bedNumber && (
+                      <span className="text-slate-600 text-xs font-semibold">
+                        ({resident.bedNumber}號床)
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

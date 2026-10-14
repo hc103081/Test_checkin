@@ -299,15 +299,19 @@ export const FilterToolbar: React.FC<FilterToolbarProps> = ({
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-slate-500 mb-1">床位編號</label>
+            <label className="block text-[11px] font-semibold text-slate-500 mb-1">房號與床位</label>
             <select
               value={filters.bedStatus}
               onChange={(e) => onChange({ ...filters, bedStatus: e.target.value })}
               className="w-full text-xs py-1.5 px-2 bg-slate-50 border border-slate-200 rounded-md focus:ring-1 focus:ring-blue-500 focus:bg-white text-slate-800"
             >
-              <option value="">全部狀態</option>
-              <option value="assigned">已具體排定 (J0514~)</option>
-              <option value="ref">待排定 (#REF!)</option>
+              <option value="">全部房號狀態</option>
+              <option value="assigned">已具體排定房號</option>
+              <option value="ref">待排定房號 (#REF!)</option>
+              <option value="J0514">J0514 房</option>
+              <option value="J0515">J0515 房</option>
+              <option value="J0516">J0516 房</option>
+              <option value="J0517">J0517 房</option>
             </select>
           </div>
 

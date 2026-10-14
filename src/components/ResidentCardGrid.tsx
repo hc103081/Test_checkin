@@ -8,10 +8,8 @@ import {
   Bus,
   ChevronDown,
   ChevronUp,
-  ExternalLink,
-  PhoneCall,
-  UserCheck,
-  Sparkles,
+  DoorOpen,
+  Edit3,
 } from 'lucide-react';
 import { Resident } from '../data/residentData';
 
@@ -20,6 +18,7 @@ interface ResidentCardGridProps {
   checkedInIds: Set<string>;
   onToggleCheckIn: (studentId: string) => void;
   onSelectResident: (resident: Resident) => void;
+  onEditRoom?: (resident: Resident) => void;
   searchHighlight: string;
 }
 
@@ -28,6 +27,7 @@ export const ResidentCardGrid: React.FC<ResidentCardGridProps> = ({
   checkedInIds,
   onToggleCheckIn,
   onSelectResident,
+  onEditRoom,
   searchHighlight,
 }) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -42,7 +42,8 @@ export const ResidentCardGrid: React.FC<ResidentCardGridProps> = ({
 
   const handleCopyCompactLine = (e: React.MouseEvent, r: Resident) => {
     e.stopPropagation();
-    const line = `${r.name} ${r.studentId} | ${r.dormitory} | ${r.vehicle || '無車輛'} | 寢具:${r.bedding > 0 ? '$' + r.bedding : '自備'}`;
+    const roomStr = r.bed && !r.bed.includes('#REF!') ? `房號:${r.bed}` : '房號:未排定';
+    const line = `${r.name} ${r.studentId} | ${r.dormitory} | ${roomStr} | ${r.vehicle || '無車輛'} | 寢具:${r.bedding > 0 ? '$' + r.bedding : '自備'}`;
     navigator.clipboard.writeText(line);
     setCopiedId(`line-${r.id}`);
     setTimeout(() => setCopiedId(null), 1500);
@@ -70,7 +71,7 @@ export const ResidentCardGrid: React.FC<ResidentCardGridProps> = ({
     return (
       <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500 shadow-xs">
         <p className="font-semibold text-slate-700 mb-1">查無符合條件的人員</p>
-        <p className="text-xs text-slate-400">請嘗試更換搜尋關鍵字或清除篩選標籤</p>
+        <p className="text-xs text-slate-400">請嘗試更換搜尋關鍵字（可搜尋學號、姓名或房號）</p>
       </div>
     );
   }
@@ -113,7 +114,7 @@ export const ResidentCardGrid: React.FC<ResidentCardGridProps> = ({
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
                   <span className="font-mono text-xs font-bold text-slate-600 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">
                     {highlightText(r.studentId, searchHighlight)}
                   </span>
@@ -161,7 +162,7 @@ export const ResidentCardGrid: React.FC<ResidentCardGridProps> = ({
               </button>
             </div>
 
-            {/* Key Field Chips (Dorm, Bed, Vehicle, Bedding) */}
+            {/* Key Field Chips (Dorm, 房號/床位, Vehicle, Bedding) */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mt-3 text-xs">
               {/* 宿舍 */}
               <div
@@ -175,16 +176,31 @@ export const ResidentCardGrid: React.FC<ResidentCardGridProps> = ({
                 <span className="font-semibold truncate">{r.dormitory}</span>
               </div>
 
-              {/* 床位 */}
-              <div className="p-1.5 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-between">
-                <span className="text-slate-400 text-[11px]">床位</span>
-                <span
-                  className={`font-mono font-bold text-xs ${
-                    isRefBed ? 'text-slate-400' : 'text-emerald-700'
-                  }`}
-                >
-                  {isRefBed ? '待排定' : r.bed}
+              {/* 房號 / 床位 (超醒目顯示) */}
+              <div
+                onClick={(e) => {
+                  if (onEditRoom) {
+                    e.stopPropagation();
+                    onEditRoom(r);
+                  }
+                }}
+                className={`p-1.5 rounded-lg border flex items-center justify-between cursor-pointer transition-colors ${
+                  isRefBed
+                    ? 'bg-amber-50/80 border-amber-200 hover:border-amber-400'
+                    : 'bg-emerald-50 border-emerald-200 hover:border-emerald-400'
+                }`}
+                title="點擊指派或編輯房號床位"
+              >
+                <span className="text-[11px] font-bold flex items-center gap-1 text-slate-600">
+                  <DoorOpen className="w-3 h-3 text-emerald-600" />
+                  房號
                 </span>
+                <div className="flex items-center gap-1 font-mono font-extrabold text-xs">
+                  <span className={isRefBed ? 'text-amber-700' : 'text-emerald-800'}>
+                    {isRefBed ? '待編排' : highlightText(r.bed, searchHighlight)}
+                  </span>
+                  <Edit3 className="w-2.5 h-2.5 text-slate-400" />
+                </div>
               </div>
 
               {/* 車輛 */}

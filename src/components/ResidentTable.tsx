@@ -9,6 +9,8 @@ import {
   Plane,
   AlertCircle,
   Building,
+  DoorOpen,
+  Edit3,
 } from 'lucide-react';
 import { Resident } from '../data/residentData';
 
@@ -20,6 +22,7 @@ interface ResidentTableProps {
   checkedInIds: Set<string>;
   onToggleCheckIn: (studentId: string) => void;
   onSelectResident: (resident: Resident) => void;
+  onEditRoom?: (resident: Resident) => void;
   sortField: SortField;
   sortOrder: SortOrder;
   onSort: (field: SortField) => void;
@@ -31,6 +34,7 @@ export const ResidentTable: React.FC<ResidentTableProps> = ({
   checkedInIds,
   onToggleCheckIn,
   onSelectResident,
+  onEditRoom,
   sortField,
   sortOrder,
   onSort,
@@ -82,7 +86,7 @@ export const ResidentTable: React.FC<ResidentTableProps> = ({
         </div>
         <h3 className="text-base font-semibold text-slate-800 mb-1">查無相符人員</h3>
         <p className="text-xs text-slate-500 max-w-sm mx-auto">
-          請嘗試縮短關鍵字、清除部分篩選標籤，或檢查學號/姓名是否拼寫正確。
+          請嘗試縮短關鍵字、清除部分篩選標籤，或檢查學號/姓名/房號是否正確。
         </p>
       </div>
     );
@@ -127,9 +131,9 @@ export const ResidentTable: React.FC<ResidentTableProps> = ({
               </th>
               <th
                 onClick={() => onSort('bed')}
-                className="py-2.5 px-3 cursor-pointer hover:bg-slate-100/80 transition-colors group min-w-[85px]"
+                className="py-2.5 px-3 cursor-pointer hover:bg-slate-100/80 transition-colors group min-w-[130px]"
               >
-                床位{renderSortIcon('bed')}
+                房號 / 床位{renderSortIcon('bed')}
               </th>
               <th
                 onClick={() => onSort('vehicle')}
@@ -247,17 +251,34 @@ export const ResidentTable: React.FC<ResidentTableProps> = ({
                     </span>
                   </td>
 
-                  {/* 床位 */}
-                  <td className="py-2 px-3 font-mono">
-                    {isRefBed ? (
-                      <span className="text-[11px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
-                        待安排
-                      </span>
-                    ) : (
-                      <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
-                        {highlightText(r.bed, searchHighlight)}
-                      </span>
-                    )}
+                  {/* 房號 / 床位 */}
+                  <td className="py-2 px-3">
+                    <div className="flex items-center gap-1.5">
+                      {isRefBed ? (
+                        <span className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded font-medium">
+                          待排房 (#REF!)
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-xs font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-mono">
+                          <DoorOpen className="w-3 h-3 text-emerald-600" />
+                          {highlightText(r.bed, searchHighlight)}
+                        </span>
+                      )}
+
+                      {/* Edit room button */}
+                      {onEditRoom && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEditRoom(r);
+                          }}
+                          className="p-1 rounded text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 transition-colors opacity-50 hover:opacity-100"
+                          title="編輯/指派房號床位"
+                        >
+                          <Edit3 className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
                   </td>
 
                   {/* 車輛 */}
