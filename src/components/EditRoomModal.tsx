@@ -112,9 +112,9 @@ export const EditRoomModal: React.FC<EditRoomModalProps> = ({
             <div className="text-right">
               <div className="text-[11px] text-slate-400">目前房號狀態</div>
               <div className="font-bold font-mono text-sm">
-                {resident.bed.includes('#REF!') || !resident.bed.trim() ? (
+                {resident.bed.includes('#REF!') || resident.bed.includes('#N/A') || !resident.bed.trim() ? (
                   <span className="text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                    尚未分配 (#REF!)
+                    尚未分配
                   </span>
                 ) : (
                   <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">

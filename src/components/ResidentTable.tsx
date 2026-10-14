@@ -154,7 +154,7 @@ export const ResidentTable: React.FC<ResidentTableProps> = ({
           <tbody className="divide-y divide-slate-100">
             {residents.map((r, idx) => {
               const isCheckedIn = checkedInIds.has(r.studentId);
-              const isRefBed = r.bed.includes('#REF!') || !r.bed.trim();
+              const isRefBed = r.bed.includes('#REF!') || r.bed.includes('#N/A') || !r.bed.trim();
 
               return (
                 <tr
@@ -256,7 +256,7 @@ export const ResidentTable: React.FC<ResidentTableProps> = ({
                     <div className="flex items-center gap-1.5">
                       {isRefBed ? (
                         <span className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded font-medium">
-                          待排房 (#REF!)
+                          待編排房號
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-xs font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-mono">

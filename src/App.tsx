@@ -26,8 +26,8 @@ import { MobileBottomNav } from './components/MobileBottomNav';
 import { EditRoomModal } from './components/EditRoomModal';
 
 const STORAGE_KEY_CHECKIN = 'dorm_checkin_status_v1';
-const STORAGE_KEY_CUSTOM_DATA = 'dorm_residents_custom_v1';
-const STORAGE_KEY_BANNER_DISMISSED = 'dorm_room_banner_dismissed_v1';
+const STORAGE_KEY_CUSTOM_DATA = 'dorm_residents_custom_v2';
+const STORAGE_KEY_BANNER_DISMISSED = 'dorm_room_banner_dismissed_v2';
 
 export default function App() {
   // Load residents
@@ -331,10 +331,10 @@ export default function App() {
 
       // Column: Room / Bed status
       if (bedStatusFilter) {
-        const isRef = r.bed.includes('#REF!') || !r.bed.trim();
-        if (bedStatusFilter === 'assigned' && isRef) return false;
-        if (bedStatusFilter === 'ref' && !isRef) return false;
-        if (['J0514', 'J0515', 'J0516', 'J0517'].includes(bedStatusFilter)) {
+        const isUnassigned = r.bed.includes('#REF!') || r.bed.includes('#N/A') || !r.bed.trim();
+        if (bedStatusFilter === 'assigned' && isUnassigned) return false;
+        if (bedStatusFilter === 'ref' && !isUnassigned) return false;
+        if (bedStatusFilter !== 'assigned' && bedStatusFilter !== 'ref') {
           if (!r.bed.includes(bedStatusFilter) && !r.roomNumber.includes(bedStatusFilter)) return false;
         }
       }
@@ -514,7 +514,7 @@ export default function App() {
   };
 
   // Count assigned rooms
-  const assignedRoomCount = residents.filter((r) => r.bed && !r.bed.includes('#REF!')).length;
+  const assignedRoomCount = residents.filter((r) => r.bed && !r.bed.includes('#REF!') && !r.bed.includes('#N/A')).length;
   const unassignedRoomCount = residents.length - assignedRoomCount;
 
   return (
@@ -567,22 +567,22 @@ export default function App() {
       <main className="max-w-7xl mx-auto px-2.5 sm:px-6 py-3 sm:py-4">
         {/* Room Explanation Banner answering "房號呢" */}
         {!isBannerDismissed && (
-          <div className="mb-3 p-3 bg-amber-50/90 border border-amber-200 rounded-2xl flex items-start justify-between gap-2.5 text-xs text-amber-900 shadow-2xs">
+          <div className="mb-3 p-3 bg-emerald-50/90 border border-emerald-200 rounded-2xl flex items-start justify-between gap-2.5 text-xs text-emerald-950 shadow-2xs">
             <div className="flex items-start gap-2">
-              <DoorOpen className="w-4 h-4 text-amber-700 mt-0.5 shrink-0" />
+              <DoorOpen className="w-4 h-4 text-emerald-700 mt-0.5 shrink-0" />
               <div>
-                <span className="font-extrabold">💡 關於房號與床位說明：</span>
-                <span className="text-amber-800">
-                  原始 CSV 檔案中大部分資料為 <code className="font-mono bg-amber-100/80 px-1 py-0.2 rounded font-bold">#REF!</code>（原 Excel 跨表公式參照遺失/尚未排定）。
-                  目前原檔已具體編配 <strong>J0514、J0515、J0516、J0517</strong> 房號共 <strong>{assignedRoomCount} 人</strong>，其餘 <strong>{unassignedRoomCount} 人</strong> 待排。
-                  您可點擊每筆資料的「<strong className="text-emerald-700">✏️ 編輯房號</strong>」即時指派現場房號，資料將自動儲存並能一鍵匯出！
+                <span className="font-extrabold text-emerald-900">✅ 最新名單已更新：第一宿舍房號已全數排定！</span>
+                <span className="text-emerald-800 block sm:inline mt-0.5 sm:mt-0">
+                  第一宿舍 (女宿 74人) 房號與床位已完整排定（如 0828-5, 0705-1, 0420-2 等）；修平科大男宿已排定 J0514～J0517 房號共 12 人。
+                  目前全體已排定房號 <strong>{assignedRoomCount} 人</strong>，僅餘 <strong>{unassignedRoomCount} 人</strong> 待排。
+                  您可直接搜尋房號（如 <code className="bg-emerald-100 font-mono font-bold px-1 rounded">0828</code> 或 <code className="bg-emerald-100 font-mono font-bold px-1 rounded">J0514</code>），或點擊「<strong className="text-emerald-900">✏️ 編輯房號</strong>」進行指派！
                 </span>
               </div>
             </div>
 
             <button
               onClick={handleDismissBanner}
-              className="text-amber-500 hover:text-amber-700 p-1 rounded-lg hover:bg-amber-100/60 transition-colors shrink-0"
+              className="text-emerald-600 hover:text-emerald-800 p-1 rounded-lg hover:bg-emerald-100/60 transition-colors shrink-0"
               title="關閉說明"
             >
               <X className="w-4 h-4" />

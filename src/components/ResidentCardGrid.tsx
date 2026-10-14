@@ -42,7 +42,8 @@ export const ResidentCardGrid: React.FC<ResidentCardGridProps> = ({
 
   const handleCopyCompactLine = (e: React.MouseEvent, r: Resident) => {
     e.stopPropagation();
-    const roomStr = r.bed && !r.bed.includes('#REF!') ? `房號:${r.bed}` : '房號:未排定';
+    const isUnassigned = !r.bed || r.bed.includes('#REF!') || r.bed.includes('#N/A');
+    const roomStr = !isUnassigned ? `房號:${r.bed}` : '房號:未排定';
     const line = `${r.name} ${r.studentId} | ${r.dormitory} | ${roomStr} | ${r.vehicle || '無車輛'} | 寢具:${r.bedding > 0 ? '$' + r.bedding : '自備'}`;
     navigator.clipboard.writeText(line);
     setCopiedId(`line-${r.id}`);
@@ -80,7 +81,7 @@ export const ResidentCardGrid: React.FC<ResidentCardGridProps> = ({
     <div className="space-y-2.5 pb-20 md:pb-6">
       {residents.map((r) => {
         const isCheckedIn = checkedInIds.has(r.studentId);
-        const isRefBed = r.bed.includes('#REF!') || !r.bed.trim();
+        const isRefBed = r.bed.includes('#REF!') || r.bed.includes('#N/A') || !r.bed.trim();
         const isExpanded = expandedCardId === r.id;
 
         return (
