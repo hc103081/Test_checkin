@@ -1,0 +1,6 @@
+{
+  "name": "進住人員極速查詢系統",
+  "description": "提供進住人員名單極速多欄位即時查詢、篩選、報到狀態管理與車輛/寢具/航班統計",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
